@@ -1,1 +1,1 @@
-# group_studies
+# my-projects
