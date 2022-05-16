@@ -1,0 +1,65 @@
+### CREATING, MODIFYING, DETERMINING AND PARTITITON OF AWS VOLUMES
+
+### CREATING AND ATTACHING SUPPLEMENTARY VOLUME
+sudo yum update -y
+lsblk
+df -h
+sudo file -s /dev/xvdf #file: to determine a file (check if formatted)
+sudo mkfs -t ext4 /dev/xvdf #build a file system
+sudo file -s /dev/xvdf #mkfs: to determine a file (check if formatted)
+sudo mkdir /mnt/mp1 #create a mounting point path for new volume (volume-1)
+sudo mount /dev/xvdf /mnt/mp1/ #mount the new volume to the mounting point path
+lsblk
+df -h
+cd /mnt/mp1
+sudo touch hello.txt
+ls
+### MODIFY THE INSTANCE VOLUME TO 6 GB On Console
+sudo resize2fs /dev/xvdf #resize the file system 
+df -h #see the real capacity
+ls /mnt/mp1/ #see file hello.txt exists
+sudo reboot now
+lsblk #see mounting path "/mnt/mp1/" has gone
+cd /mnt/mp1/ && ls # go to mp1 directory and see that it is free
+sudo mount /dev/xvdf /mnt/mp1/ #remount the volume to its path to determine it
+cd /mnt/mp1/ && ls #see the hello.txt file returned
+lsblk && df -h #see all volumes are recognized and all paths are determined
+### CREATE A NEW VOLUME OF 5GB On Console and attach it to the INSTANCE
+lsblk && df -h  #see it is seen but not determined (no xvdg)
+sudo fdisk -l /dev/xvda #show the current partitions
+sudo fdisk /dev/xvdg #Start partition
+    n -> add new partition (with 1G size)
+    p -> primary
+    Partition number: 1
+    First sector: default - use Enter to select default
+    Last sector: +2G #determine the capacity limit of first part
+sudo fdisk /dev/xvdg #Start 2nd partition
+    n -> add new partition (with rest of the size-1G)
+    p -> primary
+    Partition number: 2
+    First sector: default - use Enter to select default
+    Last sector: default - use Enter to select default
+    w -> write partition table
+sudo mkfs -t ext4 /dev/xvdg1
+sudo mkfs -t ext4 /dev/xvdg2#format the new partitions
+lsblk && df -h #see all partitions and paths are organized and determined
+sudo touch /mnt/mp3/helloguys.txt #create a file on mount path-3
+### ENLARGE CAPACITY of the latest volume 1 GB More (from 5 to 6 GB) on Console
+sudo growpart /dev/xvdg 2 #means that I want to extend the second part
+lsblk #see second part is extended
+sudo resize2fs /dev/xvdg2 #resize and extend filesystem
+ls  /mnt/mp3/ #see helloguys file
+###EXTEND ROOT VOLUME
+sudo file -s /dev/xvda1 #Check file system of the root volume
+lsblk && df -h #see root volume after "df" command is still 8GB
+sudo growpart /dev/xvda 1 #means that I want to extend the ROOT
+sudo xfs_growfs /dev/xvda1 #resize and extend filesystem
+lsblk && df -h #see all partitions and paths are organized and determined
+sudo cp /etc/fstab /etc/fstab.bak #back up the /etc/fstab file
+sudo nano /etc/fstab #open /etc/fstab file and add these commands
+ /dev/xvdf       mnt/mp1   ext4    defaults,nofail      0       0
+ /dev/xvdg1      mnt/mp2   ext4  defaults,nofail        0       0
+ /dev/xvdg2      mnt/mp3   ext4  defaults,nofail        0       0
+sudo reboot now #reboot, login again and see configuration exists
+lsblk && df -h #list volumes to show current status, all volumes and partitions should be listed
+
